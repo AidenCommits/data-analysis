@@ -1,0 +1,40 @@
+# --- Secrets (never commit) ---
+.env
+.env.*
+!.env.example
+
+# --- Data: databases, exports, snapshots ---
+*.db
+*.sqlite
+*.sqlite3
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+*.xlsx
+*.xls
+*.csv
+
+# --- Generated reports (contain company data) ---
+reports/*
+!reports/.gitkeep
+
+# --- Python ---
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# --- Editor and OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*
