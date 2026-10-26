@@ -99,6 +99,13 @@ def run_checks(df, checks):
     out["pct"] = (out["rows_flagged"] / len(df) * 100).round(1)
     return out.sort_values("rows_flagged", ascending=False)
 
+
+def reconcile(label, db_value, source_value, tolerance_pct=2):
+    diff = db_value - source_value
+    pct = diff / source_value * 100 if source_value else float("nan")
+    return pd.Series({"item": label, "database": round(db_value, 2), "source": source_value,
+                      "difference": round(diff, 2), "pct": round(pct, 1), "ok": abs(pct) <= tolerance_pct})
+
 ###CHARTS###
 
 def cost_events_chart(summary, title=None, filename=None):
