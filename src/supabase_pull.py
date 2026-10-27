@@ -68,6 +68,8 @@ def split_baseline_events(df, first=BASELINE_EVENTS[0], last=BASELINE_EVENTS[1])
     is_base = df["event_no"].between(first, last)
     return df[is_base], df[~is_base]
 
+
+#Needs review# ##Should not require distinct job ID##
 def count_jobs(start, end):
     """Jobs with labor logged in the window (a working definition of 'jobs this week')."""
     q = """select count(distinct job_id) as n from daily_labor
