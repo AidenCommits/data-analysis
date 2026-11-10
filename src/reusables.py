@@ -447,3 +447,54 @@ def weekly_cost_chart(weeks, jobs, title="Waste cost per 100 jobs", filename=Non
     if filename:
         plt.savefig(filename, dpi=150, bbox_inches="tight")
     plt.show()
+
+
+def waste_mix_chart(weeks, jobs, title="Waste cost per 100 jobs by type", filename=None):
+    """
+    Stacked bars of cost per 100 jobs: one bar per week, split by waste type,
+    with the week's total on top. The dashed mark on each bar is the average
+    of the weeks before it (combined cost / combined jobs), the same benchmark
+    as compare_weeks(..., avg_includes_current=False).
+
+    weeks: {"label": dataframe, ...} oldest first
+    jobs:  {"label": total_jobs_that_week, ...}, same labels as weeks
+
+    """
+
+    missing = set(weeks) - set(jobs)
+    if missing:
+        raise ValueError(f"No job count given for: {sorted(missing)}")
+
+    costs = pd.DataFrame(
+        {label: frame.groupby("kind")["total_cost"].sum() for label, frame in weeks.items()}
+    ).fillna(0).T.reindex(list(weeks)).fillna(0)
+    jobs_s = pd.Series(jobs).reindex(costs.index)
+    per100 = costs.div(jobs_s, axis=0) * 100
+    per100 = per100[per100.sum().sort_values(ascending=False).index]     # biggest type at the bottom
+    total = per100.sum(axis=1)
+    prior_avg = costs.sum(axis=1).cumsum().shift() / jobs_s.cumsum().shift() * 100
+
+    x = [label.removeprefix("Week of ") for label in per100.index]
+    fig, ax = plt.subplots(figsize=(9, 4.5))
+    per100.set_axis(x).plot(kind="bar", stacked=True, ax=ax, width=0.6, rot=0,
+                            color=plt.cm.tab10.colors[:per100.shape[1]])
+    for i, v in enumerate(total):
+        ax.text(i, v, f"${v:,.0f}", ha="center", va="bottom", fontsize=10, fontweight="bold")
+    first = True
+    for i, avg in enumerate(prior_avg):
+        if pd.notna(avg):
+            ax.hlines(avg, i - 0.38, i + 0.38, colors="#344054", linestyles="--", lw=1.5,
+                      label="Avg of prior weeks" if first else None)
+            first = False
+
+    ax.set_title(title)
+    ax.set_ylabel("Cost per 100 jobs ($)")
+    ax.set_xlabel("")
+    ax.yaxis.set_major_formatter(StrMethodFormatter("${x:,.0f}"))
+    ax.set_ylim(0, max(total.max(), prior_avg.max(skipna=True) if prior_avg.notna().any() else 0) * 1.12 or 1)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.legend(frameon=False, loc="center left", bbox_to_anchor=(1.01, 0.5))
+    plt.tight_layout()
+    if filename:
+        plt.savefig(filename, dpi=150, bbox_inches="tight")
+    plt.show()
